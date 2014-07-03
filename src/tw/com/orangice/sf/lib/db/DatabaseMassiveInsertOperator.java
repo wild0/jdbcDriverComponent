@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import tw.com.orangice.sf.lib.utility.SQLUtility;
+
 public class DatabaseMassiveInsertOperator {
 	Connection conn =  null;
 	PreparedStatement insertStatement = null;

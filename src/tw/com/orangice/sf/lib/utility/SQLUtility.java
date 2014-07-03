@@ -1,4 +1,7 @@
-package tw.com.orangice.sf.lib.db;
+package tw.com.orangice.sf.lib.utility;
+
+import tw.com.orangice.sf.lib.db.CriteriaCompo;
+import tw.com.orangice.sf.lib.db.TableCompo;
 
 public class SQLUtility {
 	public static String convertInsertPreparedSQL(String table, String[] columns){

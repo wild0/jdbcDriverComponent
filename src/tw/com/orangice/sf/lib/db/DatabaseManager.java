@@ -8,7 +8,7 @@ import java.sql.Statement;
 import org.apache.log4j.Logger;
 
 import tw.com.orangice.sf.lib.db.constant.SQLErrorCode;
-import tw.com.orangice.sf.lib.utility.LogUtility;
+import tw.com.orangice.sf.lib.utility.SQLUtility;
 
 public class DatabaseManager {
 	Connection conn = null;

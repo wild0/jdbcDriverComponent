@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import tw.com.orangice.sf.lib.utility.SQLUtility;
+
 public class DatabaseMassiveUpdateOperator {
 	Connection conn =  null;
 	PreparedStatement updateStatement = null;
