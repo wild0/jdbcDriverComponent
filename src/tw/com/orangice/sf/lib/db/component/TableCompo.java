@@ -1,4 +1,4 @@
-package tw.com.orangice.sf.lib.db;
+package tw.com.orangice.sf.lib.db.component;
 
 import java.util.ArrayList;
 

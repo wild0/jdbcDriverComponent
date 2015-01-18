@@ -1,4 +1,4 @@
-package tw.com.orangice.sf.lib.db;
+package tw.com.orangice.sf.lib.db.component;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,7 +25,7 @@ public class Criteria {
 		this(column, String.valueOf(value), operator, "", true);
 	}
 	public Criteria(String column, String value, String operator,  boolean quote){
-		this(column, value, operator, "", true);
+		this(column, value, operator, "", quote);
 	}
 	public Criteria(String column, String value, String operator, String function, boolean quote){
 		this.column = column;
