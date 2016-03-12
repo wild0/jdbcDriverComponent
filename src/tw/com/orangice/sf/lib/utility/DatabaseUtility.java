@@ -13,30 +13,7 @@ import tw.com.orangice.sf.lib.db.constant.DatabaseServiceConstant;
 import tw.com.orangice.sf.lib.log.LogService;
 
 public class DatabaseUtility {
-	// static ArrayList<Connection> connections = new ArrayList<Connection>();
-	// private static String dropdbSQL = "DROP TABLE ";
-
-	/*
-	 * public static Connection initial() throws SQLException,
-	 * ClassNotFoundException { Class.forName("com.mysql.jdbc.Driver");
-	 * Connection connection = (Connection) DriverManager
-	 * .getConnection("jdbc:mysql://localhost/?user=root&password=rootpassword"
-	 * ); return connection; }
-	 */
-	/*
-	 * public static void checkDatabase(Connection conn, String database) throws
-	 * SQLException { //Connection connection = null; Statement statement =
-	 * null;
-	 * 
-	 * //try { //Class.forName("com.mysql.jdbc.Driver"); //connection =
-	 * DriverManager.getConnection("jdbc:mysql://localhost/", // "root",
-	 * "admin"); statement = conn.createStatement(); String sql =
-	 * "CREATE DATABASE "+database; // To delete database: sql =
-	 * "DROP DATABASE DBNAME"; statement.executeUpdate(sql);
-	 * System.out.println("Database created!");
-	 * 
-	 * //catch (ClassNotFoundException e) { // No driver class found! //} }
-	 */
+	
 	public static void createDatabase(Connection conn, String database)
 			throws SQLException {
 		Statement stat = null;
@@ -53,6 +30,24 @@ public class DatabaseUtility {
 			String username, String password) throws SQLException{
 		return getTomcatConnection(host, port, username, password, "test");
 	}
+	
+	public static Connection getMongoDBConnection(String host, int port,
+			String username, String password, String database) throws ClassNotFoundException,
+			SQLException {
+
+		// this will load the MySQL driver, each DB has its own driver
+		Class.forName("mongodb.jdbc.MongoDriver");
+		// setup the connection with the DB.
+		Connection connection = (Connection) DriverManager.getConnection(
+				"jdbc:mongo://" + host + ":"
+						+ String.valueOf(port)+"/"+database , username, password);
+		LogService.info(DatabaseServiceConstant.TAG, "DatabaseUtility",
+				"getConnection", "Connect to server(" + host + ") complete");
+		return connection;
+
+	}
+	
+	
 	public static Connection getTomcatConnection(String host, int port,
 			String username, String password, String database) throws SQLException{
 		PoolProperties p = new PoolProperties();

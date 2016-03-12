@@ -63,37 +63,37 @@ public class SQLUtility {
 		}
 		
 		sql = sql + " ";
-		sql = sql + compo.render();
+		sql = sql + compo.renderWhere();
 		//System.out.println("convertUpdateSQL:"+sql);
 		return sql; 
 	}
 	
 	
 	public static String convertDeleteSQL(String table, CriteriaCompo condition){
-		String sql = "DELETE FROM "+table+ " "+ condition.render();
+		String sql = "DELETE FROM "+table+ " "+ condition.renderWhere();
 		
 		return sql;
 		
 	}
 	
 	public static String convertSelectSQL(String table, CriteriaCompo condition){
-		String sql = "SELECT * FROM "+table+ " "+ condition.render();
+		String sql = "SELECT * FROM "+table+ " "+ condition.renderWhere();
 		return sql;
 		
 	}
 	public static String convertSelectSQL(TableCompo tableCompo, CriteriaCompo condition){
-		String sql = "SELECT * FROM "+tableCompo.render()+ " "+ condition.render();
+		String sql = "SELECT * FROM "+tableCompo.render()+ " "+ condition.renderWhere();
 		//System.out.println("sql:"+sql);
 		return sql;
 		
 	}
 	public static String convertCountSQL(TableCompo tableCompo, CriteriaCompo condition){
-		String sql = "SELECT COUNT(*) AS COUNT FROM "+tableCompo.render()+ " "+ condition.render();
+		String sql = "SELECT COUNT(*) AS COUNT FROM "+tableCompo.render()+ " "+ condition.renderWhere();
 		//System.out.println("sql:"+sql);
 		return sql;
 	}
 	public static String convertCountSQL(String table, CriteriaCompo condition){
-		String sql = "SELECT  COUNT(*) AS COUNT FROM "+table+ " "+ condition.render();
+		String sql = "SELECT  COUNT(*) AS COUNT FROM "+table+ " "+ condition.renderWhere();
 		return sql;
 		
 	}
