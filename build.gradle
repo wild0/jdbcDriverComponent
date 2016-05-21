@@ -1,0 +1,59 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+version = '1.0'
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'Gradle Quickstart',
+                   'Implementation-Version': version
+    }
+}
+ 
+sourceSets {
+     main {
+          java {
+              srcDir  'src'
+          }
+      }
+      test {
+          java {
+              srcDir  'test'
+          }
+      }
+      tools {
+          java {
+              srcDir  'tools'
+          }
+      }
+}
+repositories {
+    mavenCentral()
+}
+dependencies {
+    compile 'log4j:log4j:1.2.16'
+    compile 'org.slf4j:slf4j-api:1.7+'
+    
+    // http://mvnrepository.com/artifact/org.apache.tomcat/tomcat-jdbc
+	compile group: 'org.apache.tomcat', name: 'tomcat-jdbc', version: '8.0.32'
+	// http://mvnrepository.com/artifact/org.mongodb/mongo-java-driver
+	compile group: 'org.mongodb', name: 'mongo-java-driver', version: '3.2.2'
+	// http://mvnrepository.com/artifact/org.json/json
+	compile group: 'org.json', name: 'json', version: '20090211'
+	
+	compile files('../log_service/build/libs/log_service-1.0.jar')
+	
+}
+uploadArchives {
+    repositories {
+       flatDir {
+           dirs 'repos'
+       }
+    }
+}
+task fatJar(type: Jar) {
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}

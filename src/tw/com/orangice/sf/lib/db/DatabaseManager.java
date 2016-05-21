@@ -23,7 +23,7 @@ import tw.com.orangice.sf.lib.log.LogService;
 import tw.com.orangice.sf.lib.utility.DatabaseUtility;
 import tw.com.orangice.sf.lib.utility.SQLUtility;
 
-public class DatabaseManager implements DatabaseManagerInterface{
+public class DatabaseManager implements DatabaseManagerInterface {
 	// Connection conn = null;
 	DataSource ds;
 	LogService logger = null;
@@ -33,8 +33,8 @@ public class DatabaseManager implements DatabaseManagerInterface{
 
 		this.logger = logger;
 	}
-	
-	public DataSource getDataSource(){
+
+	public DataSource getDataSource() {
 		return ds;
 	}
 
@@ -47,89 +47,115 @@ public class DatabaseManager implements DatabaseManagerInterface{
 			throws ClassNotFoundException, SQLException {
 		// this.conn = DatabaseUtility.getConnection(host, port, username,
 		// password, database);
+		//this.ds = DatabaseUtility.getTomcatDataSource(host, port, username,
+		//		password, database);
+		this.ds = DatabaseUtility.getTomcatDataSource(host, port, username,
+				password);
+		
+		logger.info("jdbc", "DatabaseManager", "DatabaseManager", "Connect to:"
+				+ host + "[" + username + "," + password + "]");
+
+		int result = DatabaseUtility.createDatabase(ds.getConnection(), database);
+		
 		this.ds = DatabaseUtility.getTomcatDataSource(host, port, username,
 				password, database);
-		 logger.info("jdbc", "DatabaseManager", "DatabaseManager",
-		 "Connect to:"+host+"["+username+","+password+"]");
+		System.out.println("db connect success");
+		
+		//Statement stmt = ds.getConnection().createStatement();
+		//String sql = "CREATE DATABASE " + database;
+		// To delete database: sql = "DROP DATABASE DBNAME";
+		//try{
+		//	stmt.executeUpdate(sql);
+		//}
+		//catch(Exception e){
+		//	e.printStackTrace();
+		//}
 
 		this.logger = logger;
 	}
-	/*
-	public DatabaseManager( String host, int port,
-			String username, String password, String database)
-			throws ClassNotFoundException, SQLException {
-		// this.conn = DatabaseUtility.getConnection(host, port, username,
-		// password, database);
-		Connection connection = DatabaseUtility.getConnection(host, port, username,
-				password, database);
-		 logger.info("jdbc", "DatabaseManager", "DatabaseManager",
-		 "Connect to:"+host+"["+username+","+password+"]");
 
-		
-	}
-	*/
+	
+
+	/*
+	 * public DatabaseManager( String host, int port, String username, String
+	 * password, String database) throws ClassNotFoundException, SQLException {
+	 * // this.conn = DatabaseUtility.getConnection(host, port, username, //
+	 * password, database); Connection connection =
+	 * DatabaseUtility.getConnection(host, port, username, password, database);
+	 * logger.info("jdbc", "DatabaseManager", "DatabaseManager",
+	 * "Connect to:"+host+"["+username+","+password+"]");
+	 * 
+	 * 
+	 * }
+	 */
 
 	/*
 	 * public Connection getConnection(){ return conn; } public boolean
 	 * isClosed() throws SQLException{ return conn.isClosed(); } public boolean
 	 * isValid() throws SQLException{ return conn.isValid(0); }
 	 */
-	
-	
-	public void executeSchema(File dbSchema) throws URISyntaxException{
-		//URI uri = getClass().getResource("/tw/com/orangice/sf/paperless/res/db.sql").toURI();
-		//System.out.println("uri:"+uri);
-		
-		//File dbSchema = new File(uri);
+
+	public void executeSchema(File dbSchema) throws URISyntaxException {
+		// URI uri =
+		// getClass().getResource("/tw/com/orangice/sf/paperless/res/db.sql").toURI();
+		// System.out.println("uri:"+uri);
+
+		// File dbSchema = new File(uri);
 		try {
 			FileReader reader = new FileReader(dbSchema);
-			
-			ScriptRunner sqlScript = new ScriptRunner(newConnection(), false , false);
+
+			ScriptRunner sqlScript = new ScriptRunner(newConnection(), false,
+					false);
 			sqlScript.runScript(reader);
-			LogService.debug(DatabaseServiceConstant.TAG, DatabaseManager.class.getName(), "executeSchema", "init table complete");
-			//System.out.println(schema);
-			//dm.executeQuery(schema);
+			LogService.debug(DatabaseServiceConstant.TAG,
+					DatabaseManager.class.getName(), "executeSchema",
+					"init table complete");
+			// System.out.println(schema);
+			// dm.executeQuery(schema);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			LogService.debug(DatabaseServiceConstant.TAG, DatabaseManager.class.getName(), "executeSchema", "init table fail", e);
+			LogService.debug(DatabaseServiceConstant.TAG,
+					DatabaseManager.class.getName(), "executeSchema",
+					"init table fail", e);
 			e.printStackTrace();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
-			LogService.debug(DatabaseServiceConstant.TAG, DatabaseManager.class.getName(), "executeSchema", "init table fail", e);
+			LogService.debug(DatabaseServiceConstant.TAG,
+					DatabaseManager.class.getName(), "executeSchema",
+					"init table fail", e);
 			e.printStackTrace();
 		}
-		
+
 	}
-	
-	
+
 	public Connection newConnection() throws SQLException {
 		return ds.getConnection();
 	}
 
 	public void executeQuery(String query) throws SQLException {
 		Connection conn = ds.getConnection();
-		try{
-		Statement stat = conn.createStatement();
-		stat.execute(query);
-		stat.close();
-	} catch (Exception e) {
-		e.printStackTrace();
-		if (conn != null) {
-			try {
-				conn.rollback();
-			} catch (SQLException ex) {
-				ex.printStackTrace();
+		try {
+			Statement stat = conn.createStatement();
+			stat.execute(query);
+			stat.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+			if (conn != null) {
+				try {
+					conn.rollback();
+				} catch (SQLException ex) {
+					ex.printStackTrace();
+				}
+			}
+		} finally {
+			if (conn != null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
 			}
 		}
-	} finally {
-		if (conn != null) {
-			try {
-				conn.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-		}
-	}
 	}
 
 	public void createTable(String tableSchema) throws SQLException {
@@ -245,7 +271,7 @@ public class DatabaseManager implements DatabaseManagerInterface{
 			}
 			// return SQLErrorCode.SQL_INSERT_FAIL_CODE;
 			return -1;
-		}finally {
+		} finally {
 			if (conn != null) {
 				try {
 					conn.close();
@@ -282,7 +308,7 @@ public class DatabaseManager implements DatabaseManagerInterface{
 			}
 			// return SQLErrorCode.SQL_INSERT_FAIL_CODE;
 			return -1;
-		}finally {
+		} finally {
 			if (conn != null) {
 				try {
 					conn.close();
@@ -302,8 +328,8 @@ public class DatabaseManager implements DatabaseManagerInterface{
 		LogService.debug(DatabaseServiceConstant.TAG,
 				this.getClass().getName(), "getObjects", "QUERY sql:" + sql);
 		ResultSet rs = stat.executeQuery(sql);
-		
-		return new QueryObjectsModel(rs,conn);
+
+		return new QueryObjectsModel(rs, conn);
 	}
 
 	public int getCount(String table, CriteriaCompo condition)
@@ -322,7 +348,7 @@ public class DatabaseManager implements DatabaseManagerInterface{
 			LogService.debug(DatabaseServiceConstant.TAG, this.getClass()
 					.getName(), "getCount", "QUERY_COUNT result:" + count);
 		}
-		
+
 		if (conn != null) {
 			try {
 				conn.close();
@@ -333,8 +359,8 @@ public class DatabaseManager implements DatabaseManagerInterface{
 		return count;
 	}
 
-	public QueryObjectsModel getObjects(TableCompo tableCompo, CriteriaCompo condition)
-			throws SQLException {
+	public QueryObjectsModel getObjects(TableCompo tableCompo,
+			CriteriaCompo condition) throws SQLException {
 		Connection conn = ds.getConnection();
 		String sql = SQLUtility.convertSelectSQL(tableCompo, condition);
 		LogService.debug(DatabaseServiceConstant.TAG,
@@ -342,17 +368,18 @@ public class DatabaseManager implements DatabaseManagerInterface{
 				"QUERY TableCompo sql:" + sql);
 		Statement stat = conn.createStatement();
 		ResultSet rs = stat.executeQuery(sql);
-		
-		//LogService.debug(DatabaseServiceConstant.TAG,
-		//		this.getClass().getName(), "getObjects",
-		//		"QUERY TableCompo result:" + rs.get);
-		
+
+		// LogService.debug(DatabaseServiceConstant.TAG,
+		// this.getClass().getName(), "getObjects",
+		// "QUERY TableCompo result:" + rs.get);
+
 		return new QueryObjectsModel(rs, conn);
 	}
+
 	public int getCount(TableCompo tableCompo, CriteriaCompo condition)
 			throws SQLException {
 		Connection conn = ds.getConnection();
-		//String sql = SQLUtility.convertCountSQL(table, condition);
+		// String sql = SQLUtility.convertCountSQL(table, condition);
 		String sql = SQLUtility.convertCountSQL(tableCompo, condition);
 		Statement stat = conn.createStatement();
 		LogService
@@ -365,7 +392,7 @@ public class DatabaseManager implements DatabaseManagerInterface{
 			LogService.debug(DatabaseServiceConstant.TAG, this.getClass()
 					.getName(), "getCount", "QUERY_COUNT result:" + count);
 		}
-		
+
 		if (conn != null) {
 			try {
 				conn.close();

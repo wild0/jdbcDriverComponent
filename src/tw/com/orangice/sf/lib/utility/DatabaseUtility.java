@@ -14,16 +14,17 @@ import tw.com.orangice.sf.lib.log.LogService;
 
 public class DatabaseUtility {
 	
-	public static void createDatabase(Connection conn, String database)
+	public static int createDatabase(Connection conn, String database)
 			throws SQLException {
 		Statement stat = null;
 
 		stat = conn.createStatement();
-		stat.executeUpdate("CREATE DATABASE IF NOT EXISTS " + database);
+		int result = stat.executeUpdate("CREATE DATABASE IF NOT EXISTS " + database);
 		stat.close();
 		LogService.debug(DatabaseServiceConstant.TAG,
 				DatabaseUtility.class.getName(), "createDatabase",
 				"create database complete:"+"CREATE DATABASE IF NOT EXISTS " + database);
+		return result;
 
 	}
 	public static Connection getTomcatConnection(String host, int port,
