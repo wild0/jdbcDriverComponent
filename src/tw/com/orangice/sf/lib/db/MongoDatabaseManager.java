@@ -1,22 +1,32 @@
 package tw.com.orangice.sf.lib.db;
 
-import java.net.UnknownHostException;
-import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Hashtable;
+import java.util.Random;
+
+import org.bson.Document;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
+import com.mongodb.MongoClientURI;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteResult;
+import com.mongodb.async.SingleResultCallback;
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.MongoIterable;
+import com.mongodb.client.model.InsertOneOptions;
+import com.mongodb.client.model.Sorts;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
 
 import tw.com.orangice.sf.lib.db._interface.DatabaseManagerInterface;
 import tw.com.orangice.sf.lib.db.component.Criteria;
@@ -27,17 +37,16 @@ import tw.com.orangice.sf.lib.db.component.TableCompo;
 import tw.com.orangice.sf.lib.db.component.TableCriteria;
 import tw.com.orangice.sf.lib.db.constant.DatabaseServiceConstant;
 import tw.com.orangice.sf.lib.log.LogService;
-import tw.com.orangice.sf.lib.utility.DatabaseUtility;
 import tw.com.orangice.sf.lib.utility.MongodbUtility;
-import tw.com.orangice.sf.lib.utility.SQLUtility;
 
 public class MongoDatabaseManager implements DatabaseManagerInterface {
-
-	DB db = null;
+	MongoClient mongoClient;
+	MongoDatabase db = null;
 	String host = null;
 	int port = 0;
 	String username = "";
 	String password = "";
+	LogService logger = null;
 
 	// Connection conn = null;
 
@@ -47,9 +56,26 @@ public class MongoDatabaseManager implements DatabaseManagerInterface {
 		try {
 			MongoCredential credential = MongoCredential.createCredential(
 					username, database, password.toCharArray());
-			MongoClient mongoClient = new MongoClient(new ServerAddress(host,
+			
+			
+			
+			
+			mongoClient = new MongoClient(new ServerAddress(host,
 					port), Arrays.asList(credential));
-			db = mongoClient.getDB(database);
+			
+			//MongoClientURI uri = new MongoClientURI("mongodb://root:password123@140.115.35.136:27017/pingpong");
+			//MongoClient mongoClient = new MongoClient(uri);
+			
+			db = mongoClient.getDatabase(database);
+			System.out.println("aaa:");
+			MongoIterable<String> strings=mongoClient.listDatabaseNames();
+			  MongoCursor<String> iterator=strings.iterator();
+			  while (iterator.hasNext()) {
+			    //LOG.info("Database: {}",iterator.next());
+			    System.out.println("aaa:"+iterator.next());
+			  }
+			this.logger = logger;
+			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -72,9 +98,14 @@ public class MongoDatabaseManager implements DatabaseManagerInterface {
 			// MongoCredential credential =
 			// MongoCredential.createCredential(username, database,
 			// password.toCharArray());
-			MongoClient mongoClient = new MongoClient(new ServerAddress(host,
+			mongoClient = new MongoClient(new ServerAddress(host,
 					port));
-			db = mongoClient.getDB(database);
+			
+			db = mongoClient.getDatabase(database);
+			
+			this.logger = logger;
+			
+			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -89,6 +120,7 @@ public class MongoDatabaseManager implements DatabaseManagerInterface {
 		 */
 
 	}
+	
 
 	/*
 	 * public int getCount(String table, CriteriaCompo condition) throws
@@ -146,50 +178,26 @@ public class MongoDatabaseManager implements DatabaseManagerInterface {
 			String keyColumn) throws SQLException {
 		// Connection conn = ds.getConnection();
 
-		DBCollection coll = db.getCollection(table);
+		MongoCollection<Document> collection = checkCollection(table);
+		
 		// DBCollection coll = db.getCollection(db.getName());
-		long id = coll.getCount();
-		DBObject obj = MongodbUtility.convertInsert(db.getName(), table,
+		Random randnum = new Random();
+        randnum.setSeed(System.currentTimeMillis());
+		
+		//long id = collection.count();
+        long id = randnum.nextLong();
+		Document document = MongodbUtility.convertInsertDocument(db.getName(), table,
 				columns, values, keyColumn, id);
 
-		LogService.debug(DatabaseServiceConstant.TAG,
-				this.getClass().getName(), "insertSQL",
-				"INSERT SQL:" + obj.toString());
+		//LogService.debug(DatabaseServiceConstant.TAG,
+		//		this.getClass().getName(), "insertSQL",
+		//		"INSERT SQL:" + document.toString());
+		
+		InsertOneOptions options = new InsertOneOptions();
+		collection.insertOne(document, options);
+		//String insertId = document.getObjectId("_id").toString();
 
-		WriteResult rw = coll.insert(obj);
-		// long id = (Long) obj.toMap().get(keyColumn);
-		// return rw.getField("id");
 		return id;
-		/*
-		 * try { //
-		 * logger.info("DB:Insert:"+table+"("+columns.length+","+values.
-		 * length+")");
-		 * 
-		 * String sql = SQLUtility.convertInsertSQL(table, columns, values);
-		 * LogService.debug(DatabaseServiceConstant.TAG, this.getClass()
-		 * .getName(), "insertSQL", "INSERT SQL:" + sql); Statement stat =
-		 * conn.createStatement(); // stat.execute(sql,
-		 * Statement.RETURN_GENERATED_KEYS);
-		 * 
-		 * long count = stat.executeUpdate(sql,
-		 * Statement.RETURN_GENERATED_KEYS); ResultSet keys =
-		 * stat.getGeneratedKeys();
-		 * 
-		 * keys.next(); int keyId = keys.getInt(1);
-		 * 
-		 * LogService.debug(DatabaseServiceConstant.TAG, this.getClass()
-		 * .getName(), "insertSQL", "Insert key:" + keyId); stat.close();
-		 * 
-		 * return keyId; } catch (SQLException e) { // TODO Auto-generated catch
-		 * block LogService.debug(DatabaseServiceConstant.TAG, this.getClass()
-		 * .getName(), "insertSQL", "Insert fail", e); e.printStackTrace(); //
-		 * conn.rollback(); if (conn != null) { try { conn.rollback(); } catch
-		 * (SQLException ex) { ex.printStackTrace(); } } // return
-		 * SQLErrorCode.SQL_INSERT_FAIL_CODE; return -1; } finally { if (conn !=
-		 * null) { try { conn.close(); } catch (SQLException e) {
-		 * e.printStackTrace(); } } }
-		 */
-
 	}
 
 	public int updateSQL(String table, String[] columns, Object[] values,
@@ -199,23 +207,26 @@ public class MongoDatabaseManager implements DatabaseManagerInterface {
 			// DBCollection coll = db.getCollection(table);
 
 			// condition);
-			LogService.debug(DatabaseServiceConstant.TAG, this.getClass()
-					.getName(), "updateSQL", "UPDATE SQL:" + table);
+			//LogService.debug(DatabaseServiceConstant.TAG, this.getClass()
+			//		.getName(), "updateSQL", "UPDATE SQL:" + table);
+			MongoCollection<Document> collection = db.getCollection(table);
 
-			DBCollection coll = db.getCollection(table);
-			DBObject dbObj = MongodbUtility.convertUpdateSet(table, columns,
-					values, condition);
-
-			LogService.debug(DatabaseServiceConstant.TAG, this.getClass()
-					.getName(), "updateSQL",
-					"update(" + condition.renderDBObject().toString() + ","
-							+ dbObj.toString() + ")");
-
-			WriteResult rw = coll.update(condition.renderDBObject(), dbObj,
-					true, false);
-			LogService.debug(DatabaseServiceConstant.TAG, this.getClass()
-					.getName(), "updateSQL", "UPDATE SQL RESULT[" + rw.getN()
-					+ "]:" + rw.getUpsertedId());
+			//DBObject dbObj = MongodbUtility.convertUpdateSet(table, columns,
+			//		values, condition);
+			Document filter = MongodbUtility.convertFilterDocument(condition);
+			Document update = MongodbUtility.convertUpdateDocument(columns, values);
+			//LogService.debug(DatabaseServiceConstant.TAG, this.getClass()
+			//		.getName(), "updateSQL",
+			//		"update(" + condition.renderDBObject().toString() + ","
+			//				+ dbObj.toString() + ")");
+			System.out.println("filter:"+filter.toJson());
+			System.out.println("update:"+update.toJson());
+			UpdateResult ur = collection.updateMany(filter, update);
+			//WriteResult rw = coll.update(condition.renderDBObject(), dbObj,
+			//		true, false);
+			//LogService.debug(DatabaseServiceConstant.TAG, this.getClass()
+			//		.getName(), "updateSQL", "UPDATE SQL RESULT[" + rw.getN()
+			//		+ "]:" + rw.getUpsertedId());
 			// String sql = SQLUtility.convertUpdateSQL(table, columns, values,
 			// condition);
 
@@ -226,7 +237,7 @@ public class MongoDatabaseManager implements DatabaseManagerInterface {
 			// stat.execute(sql, Statement.RETURN_GENERATED_KEYS);
 			// stat.close();
 			// return result;
-			return rw.getN();
+			return (int)ur.getModifiedCount();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -238,12 +249,27 @@ public class MongoDatabaseManager implements DatabaseManagerInterface {
 			 */
 			// return SQLErrorCode.SQL_INSERT_FAIL_CODE;
 			return -1;
-		} finally {
-
-			/*
-			 * if (conn != null) { try { conn.close(); } catch (SQLException e)
-			 * { e.printStackTrace(); } }
-			 */
+		} 
+	}
+	
+	public int dropCollection(String table){
+		try{
+			db.getCollection(table).drop();
+			return 0;
+		}
+		catch(Exception e){
+			e.printStackTrace();
+			return -1;
+		}
+	}
+	public MongoCollection<Document> checkCollection(String table){
+		MongoCollection<Document> collection = db.getCollection(table);
+		if(collection!=null){
+			return collection;
+		}
+		else{
+			db.createCollection(table);
+			return db.getCollection(table);
 		}
 	}
 
@@ -252,26 +278,19 @@ public class MongoDatabaseManager implements DatabaseManagerInterface {
 		// Connection conn = ds.getConnection();
 
 		// DBCollection coll = db.getCollection(table);
-		DBCollection coll = db.getCollection(table);
+		MongoCollection<Document> collection = db.getCollection(table);
 		// long id = coll.getCount();
-		DBObject obj = MongodbUtility.convertDelete(table, condition);
+		Document filter = MongodbUtility.convertDeleteBson(table, condition);
 
 		// LogService.debug(DatabaseServiceConstant.TAG, this.getClass()
 		// .getName(), "deleteSQL",
 		// "["+db.getName()+"]DELETE SQL["+coll.findOne()+"]:" +
 		// obj.toString());
+		DeleteResult dr = collection.deleteMany(filter);
 
-		LogService.debug(DatabaseServiceConstant.TAG,
-				this.getClass().getName(), "deleteSQL", "[" + db.getName()
-						+ "]DELETE SQL:" + obj.toString());
-		// coll.find(obj).count();
-		WriteResult rw = coll.remove(obj);
 
-		LogService.debug(DatabaseServiceConstant.TAG,
-				this.getClass().getName(), "deleteSQL", "[" + db.getName()
-						+ "]DELETE Count:" + rw.getN());
-		// return rw.getField("id");
-		return rw.getN();
+		
+		return (int)dr.getDeletedCount();
 
 		/*
 		 * try { String sql = SQLUtility.convertDeleteSQL(table, condition);
@@ -292,53 +311,65 @@ public class MongoDatabaseManager implements DatabaseManagerInterface {
 		// return 0;
 	}
 
+//	public QueryObjectsModel getObjects(String table, CriteriaCompo condition)
+//			throws SQLException {
+//		// Connection conn = ds.getConnection();
+//		LogService.debug(DatabaseServiceConstant.TAG,
+//				this.getClass().getName(), "getObjects", "start");
+//		//DBCollection coll = db.getCollection(table);
+//		// DBObject dbObj = MongodbUtility.convertSelect();
+//		MongoCollection<Document> collection = db.getCollection(table);
+//		Document filter = MongodbUtility.convertFilterDocument(condition);
+//		LogService.debug(DatabaseServiceConstant.TAG,
+//				this.getClass().getName(), "getObjects", filter.toJson());
+//		FindIterable<Document> iterable = collection.find(filter);
+//		
+//		
+//		return new QueryObjectsModel(iterable);
+//	}
+	
 	public QueryObjectsModel getObjects(String table, CriteriaCompo condition)
 			throws SQLException {
 		// Connection conn = ds.getConnection();
+		FindIterable<Document> iterable = null;
 		LogService.debug(DatabaseServiceConstant.TAG,
 				this.getClass().getName(), "getObjects", "start");
-		DBCollection coll = db.getCollection(table);
+		//DBCollection coll = db.getCollection(table);
 		// DBObject dbObj = MongodbUtility.convertSelect();
-
-		BasicDBObject queryDBObject = new BasicDBObject();
-		ArrayList<String> logicals = condition.getConditions();
-		ArrayList<CriteriaElement> cs = condition.getCriteriaElements();
-		//ArrayList<BasicDBObject> dbObjs = new ArrayList<BasicDBObject>();
-		for (int i = 0; i < cs.size(); i++) {
-
-			BasicDBObject dbObj = null;
-			if (i - 1 > -1) {
-				// dbObj = cs.get(i).getDBObject(logicals.get(i-1));
-				if(cs.get(i) instanceof Criteria){
-					dbObj = ((Criteria)cs.get(i)).getDBObject(queryDBObject, logicals.get(i - 1));
-				}
-			} else {
-				// dbObj = cs.get(i).getDBObject();
-				if(cs.get(i) instanceof Criteria){
-					dbObj = ((Criteria)cs.get(i)).getDBObject(queryDBObject);
-				}
+		MongoCollection<Document> collection = db.getCollection(table);
+		Document filter = MongodbUtility.convertFilterDocument(condition);
+		LogService.debug(DatabaseServiceConstant.TAG,
+				this.getClass().getName(), "getObjects", filter.toJson());
+		
+		String sortBy = condition.getSortBy();
+		System.out.println("getObjects:sortBy:"+sortBy);
+		if(!sortBy.equals("")){
+			String order = condition.getOrder();
+			System.out.println("getObjects:order:"+order);
+			Document sort = new Document();
+			if(order.equals("DESC")){
+				sort.put(sortBy, 1);
+				iterable = collection.find(filter).sort(Sorts.descending(sortBy));
 			}
-
-			// dbObjs.add(dbObj);
+			else{
+				sort.put(sortBy, 0);
+				iterable = collection.find(filter).sort(Sorts.ascending(sortBy));
+			}
+			//iterable = collection.find(filter).sort(Sorts.descending(sortBy));
 			
 		}
-		// if(dbObjs.size()>0){
-		// queryDbObjs.put("$and", dbObjs);
-		// }
-		LogService.debug(DatabaseServiceConstant.TAG,
-				this.getClass().getName(), "getObjects", "QUERY sql:"
-						+ queryDBObject.toString());
-		// String sql = SQLUtility.convertSelectSQL(table, condition);
-
-		// Statement stat = conn.createStatement();
-		// LogService.debug(DatabaseServiceConstant.TAG,
-		// this.getClass().getName(), "getObjects", "QUERY sql:" + sql);
-		// ResultSet rs = stat.executeQuery(sql);
-
-		return new QueryObjectsModel(coll, queryDBObject);
+		else{
+			iterable = collection.find(filter);
+		}
+		
+		
+		
+		
+		
+		return new QueryObjectsModel(iterable);
 	}
 
-	public int getCount(String table, CriteriaCompo condition)
+	public long getCount(String table, CriteriaCompo condition)
 			throws SQLException {
 		/*
 		 * //Connection conn = ds.getConnection(); String sql =
@@ -355,39 +386,31 @@ public class MongoDatabaseManager implements DatabaseManagerInterface {
 		 * if (conn != null) { try { conn.close(); } catch (SQLException e) {
 		 * e.printStackTrace(); } } return count;
 		 */
-		return 0;
+		MongoCollection<Document> collection = db.getCollection(table);
+		Document filter = MongodbUtility.convertFilterDocument(condition);
+		long count = collection.count(filter);
+		return count;
 	}
 
-	public int getCount(TableCompo tableCompo, CriteriaCompo condition)
-			throws SQLException {
-
-		return 0;
-	}
-
+//	public int getCount(TableCompo tableCompo, CriteriaCompo condition)
+//			throws SQLException {
+//
+//		return 0;
+//	}
+	/*
 	public QueryObjectsModel getObjects(TableCompo tableCompo,
 			CriteriaCompo condition) throws SQLException {
 		// Connection conn = ds.getConnection();
-		/*
-		 * tableCompo.get
-		 * 
-		 * String sql = MangodbUtility..(tableCompo, condition);
-		 * LogService.debug(DatabaseServiceConstant.TAG,
-		 * this.getClass().getName(), "getObjects", "QUERY TableCompo sql:" +
-		 * sql); Statement stat = conn.createStatement(); ResultSet rs =
-		 * stat.executeQuery(sql);
-		 */
 
-		// ArrayList<QueryObjectsModel> qoms = new
-		// ArrayList<QueryObjectsModel>();
-
-		/*
-		 * 所有使用的table列表
-		 */
-
-		Hashtable<String, TableCriteria> tables = new Hashtable();
+		String targetTable = "";
+		Hashtable<String, TableCriteria> tables = new Hashtable<String, TableCriteria>();
 		for (int i = 0; i < tableCompo.getTables().size(); i++) {
 
 			String table = tableCompo.getTables().get(i);
+			if(i==0){
+				targetTable = table;
+			}
+			
 			String variable = tableCompo.getVariables().get(i);
 			String key = tableCompo.getKeys().get(i);
 
@@ -400,40 +423,24 @@ public class MongoDatabaseManager implements DatabaseManagerInterface {
 			tables.put(variable, tc);
 		}
 
-		// ArrayList<Criteria> criterias = condition.getCriteras();
-
-		/*
-		 * for(int k = 0;k<tables.size();k++){ Criteria c = criterias.get(k);
-		 * if(!c.isQuote()){ //join if(k-1>-1){ String logical =
-		 * condition.getConditions().get(k-1); } String srcTableVar =
-		 * c.getColumnTableVariable(); String srcColumnName =
-		 * c.getSrcColumnName(); String dstTableVar = c.getValueTableVariable();
-		 * String dstColumnName = c.getDstColumnName(); } else{ String variable
-		 * = c.getColumnTableVariable(); TableCriteria tc =
-		 * tables.get(variable);//取得運作的collection String logical = "";
-		 * if(k-1>-1){ logical = condition.getConditions().get(k-1); }
-		 * tc.addNormalRelation(c.getDBObject(logical));
-		 * 
-		 * 
-		 * //BasicDBObject bdbc = new BasicDBObject();
-		 * 
-		 * } }
-		 */
-
+		
+		
 		QueryObjectsModel qom = new QueryObjectsModel();
-		DBCollection calculateCollection = db.createCollection(
-				qom.getCalculateCollectionKey(), new BasicDBObject());
-		DBCollection firstCollection = null;
-		// for(int l = tables.size()-1;l>-1;l--){
-		// int l = 0;
-
-		// boolean joinable = false;
+		
+		
+		//DBCollection calculateCollection = db.createCollection(
+		//		qom.getCalculateCollectionKey(), new BasicDBObject());
+		
+		//DBCollection firstCollection = null;
+		MongoCollection<Document> firstCollection = null;
+		
 
 		for (int l = 0; l < tables.size(); l++) {
 
 			String table = tableCompo.getTables().get(l); // get table name
-			DBCollection coll = db.getCollection(table);
-			firstCollection = coll;
+			//DBCollection coll = db.getCollection(table);
+			MongoCollection<Document> collection = db.getCollection(table);
+			firstCollection = collection;
 
 			String tableVariable = tableCompo.getVariables().get(l); // get
 																		// table
@@ -451,32 +458,13 @@ public class MongoDatabaseManager implements DatabaseManagerInterface {
 
 			Criteria c = condition.getJoinCriteria(tableVariable);
 			if (c != null) {
-				qom.addJoin(tableVariable, coll, c.getSrcColumnName(), // 作為join的Index
+				qom.addJoin(tableVariable, collection, c.getSrcColumnName(), // 作為join的Index
 						tableCompo.getColumns(l));
 			} else {
-				qom.addJoin(tableVariable, coll, tableCompo.getKeys().get(l), // 作為join的Index
+				qom.addJoin(tableVariable, collection, tableCompo.getKeys().get(l), // 作為join的Index
 						tableCompo.getColumns(l));
 			}
 
-			/*
-			 * for(int h = 0;h<condition.getCriteras().size();h++){ Criteria c =
-			 * condition.getCriteras().get(h); if(!c.isQuote()){
-			 * if(c.getSrcTableVariable().equals(tableVariable)){
-			 * System.out.println
-			 * ("["+h+"]getObjects:table variable["+tableVariable
-			 * +"] match:src:"+c.getSrcColumnName()); qom.addJoin(tableVariable,
-			 * coll, c.getSrcColumnName(), //作為join的Index
-			 * tableCompo.getColumns(l)); //joinable = true; } else
-			 * if(c.getDstTableVariable().equals(tableVariable)){
-			 * System.out.println
-			 * ("["+h+"]getObjects:table variable["+tableVariable
-			 * +"] match:dst:"+c.getDstColumnName()); qom.addJoin(tableVariable,
-			 * coll, c.getDstColumnName(), //作為join的Index
-			 * tableCompo.getColumns(l)); } else{
-			 * System.out.println("["+h+"]getObjects:["
-			 * +c.getDstTableVariable()+"]table variable["
-			 * +tableVariable+"] match:dst:"+c.getDstColumnName()); } } }
-			 */
 
 			// qom.addJoin(tableVariable, coll,
 			// tableCompo.getKeys().get(l), //作為join的Index
@@ -489,17 +477,20 @@ public class MongoDatabaseManager implements DatabaseManagerInterface {
 			// qom.query()
 
 		}
+		
+		MongoCollection<Document> collection = db.getCollection(targetTable);
+		Document filter = MongodbUtility.convertFilterDocument(condition);
+		LogService.debug(DatabaseServiceConstant.TAG,
+				this.getClass().getName(), "getObjects", filter.toJson());
+		FindIterable<Document> iterable = collection.find(filter);
+
 
 		BasicDBObject queryDBObject = new BasicDBObject();
 		// ArrayList<Criteria> criterias = condition.getCriteras();
 		ArrayList<String> logicals = condition.getConditions();
 		ArrayList<CriteriaElement> cs = condition.getCriteriaElements();
 		ArrayList<BasicDBObject> dbObjs = new ArrayList<BasicDBObject>();
-		/*
-		 * for(int i=0;i<cs.size();i++){ if(cs.get(i).isQuote()){
-		 * //cs.get(i).getDBObject(queryDBObject);
-		 * cs.get(i).getDBObject(queryDBObject); //dbObjs.add(dbObj); } }
-		 */
+		
 		for (int i = 0; i < cs.size(); i++) {
 			if(cs.get(i) instanceof Criteria){
 			if (((Criteria)cs.get(i)).isQuote()) {
@@ -525,12 +516,13 @@ public class MongoDatabaseManager implements DatabaseManagerInterface {
 		// queryDbObjs.put("$and", dbObjs);
 		// }
 
-		qom.execute(calculateCollection, queryDBObject);
-
+		//qom.execute(calculateCollection, queryDBObject);
+		
 		// DBObject dbObj = null;
 
 		return qom;
 	}
+	*/
 
 	@Override
 	public void createTable(String tableSchema) throws SQLException {
@@ -542,6 +534,26 @@ public class MongoDatabaseManager implements DatabaseManagerInterface {
 	public void createDatabase(String database) throws SQLException {
 		// TODO Auto-generated method stub
 
+	}
+
+	@Override
+	public boolean isMongoDB() {
+		// TODO Auto-generated method stub
+		return true;
+	}
+
+	@Override
+	public QueryObjectsModel getObjects(TableCompo tableCompo,
+			CriteriaCompo condition) throws SQLException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public long getCount(TableCompo tableCompo, CriteriaCompo condition)
+			throws SQLException {
+		// TODO Auto-generated method stub
+		return 0;
 	}
 
 }

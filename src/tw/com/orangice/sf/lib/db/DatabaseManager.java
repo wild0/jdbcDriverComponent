@@ -44,7 +44,7 @@ public class DatabaseManager implements DatabaseManagerInterface {
 	 */
 	public DatabaseManager(LogService logger, String host, int port,
 			String username, String password, String database)
-			throws ClassNotFoundException, SQLException {
+			throws ClassNotFoundException, Exception {
 		// this.conn = DatabaseUtility.getConnection(host, port, username,
 		// password, database);
 		//this.ds = DatabaseUtility.getTomcatDataSource(host, port, username,
@@ -95,7 +95,7 @@ public class DatabaseManager implements DatabaseManagerInterface {
 	 * isValid() throws SQLException{ return conn.isValid(0); }
 	 */
 
-	public void executeSchema(File dbSchema) throws URISyntaxException {
+	public void executeSchema(File dbSchema) throws Exception {
 		// URI uri =
 		// getClass().getResource("/tw/com/orangice/sf/paperless/res/db.sql").toURI();
 		// System.out.println("uri:"+uri);
@@ -128,11 +128,11 @@ public class DatabaseManager implements DatabaseManagerInterface {
 
 	}
 
-	public Connection newConnection() throws SQLException {
+	public Connection newConnection() throws Exception {
 		return ds.getConnection();
 	}
 
-	public void executeQuery(String query) throws SQLException {
+	public void executeQuery(String query) throws Exception {
 		Connection conn = ds.getConnection();
 		try {
 			Statement stat = conn.createStatement();
@@ -158,7 +158,7 @@ public class DatabaseManager implements DatabaseManagerInterface {
 		}
 	}
 
-	public void createTable(String tableSchema) throws SQLException {
+	public void createTable(String tableSchema) throws Exception {
 		Connection conn = ds.getConnection();
 		try {
 
@@ -185,13 +185,13 @@ public class DatabaseManager implements DatabaseManagerInterface {
 		}
 	}
 
-	public void createDatabase(String database) throws SQLException {
+	public void createDatabase(String database) throws Exception {
 		Connection conn = ds.getConnection();
 		DatabaseUtility.createDatabase(conn, database);
 	}
 
 	public long insertSQL(String table, String[] columns, Object[] values,
-			String keyColumn) throws SQLException {
+			String keyColumn) throws Exception {
 		Connection conn = ds.getConnection();
 		try {
 			// logger.info("DB:Insert:"+table+"("+columns.length+","+values.length+")");
@@ -332,7 +332,7 @@ public class DatabaseManager implements DatabaseManagerInterface {
 		return new QueryObjectsModel(rs, conn);
 	}
 
-	public int getCount(String table, CriteriaCompo condition)
+	public long getCount(String table, CriteriaCompo condition)
 			throws SQLException {
 		Connection conn = ds.getConnection();
 		String sql = SQLUtility.convertCountSQL(table, condition);
@@ -376,7 +376,7 @@ public class DatabaseManager implements DatabaseManagerInterface {
 		return new QueryObjectsModel(rs, conn);
 	}
 
-	public int getCount(TableCompo tableCompo, CriteriaCompo condition)
+	public long getCount(TableCompo tableCompo, CriteriaCompo condition)
 			throws SQLException {
 		Connection conn = ds.getConnection();
 		// String sql = SQLUtility.convertCountSQL(table, condition);
@@ -405,5 +405,11 @@ public class DatabaseManager implements DatabaseManagerInterface {
 	// public void close() throws SQLException{
 	// conn.close();
 	// }
+
+	@Override
+	public boolean isMongoDB() {
+		// TODO Auto-generated method stub
+		return false;
+	}
 
 }

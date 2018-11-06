@@ -69,7 +69,7 @@ public class DatabaseInitiate {
 			
 			LogService.debug(DatabaseServiceConstant.TAG, DatabaseInitiate.class.getName(), "createDatabase", "create database complete:"+ds.getName());
 			return 1;
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			LogService.debug(DatabaseServiceConstant.TAG, DatabaseInitiate.class.getName(), "createDatabase", "create database fail", e);
@@ -93,7 +93,7 @@ public class DatabaseInitiate {
 			// TODO Auto-generated catch block
 			LogService.debug(DatabaseServiceConstant.TAG, DatabaseInitiate.class.getName(), "dropTable", "drop table fail", e);
 			e.printStackTrace();
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			LogService.debug(DatabaseServiceConstant.TAG, DatabaseInitiate.class.getName(), "dropTable", "drop table fail", e);
 			e.printStackTrace();
@@ -116,7 +116,7 @@ public class DatabaseInitiate {
 			// TODO Auto-generated catch block
 			LogService.debug(DatabaseServiceConstant.TAG, DatabaseInitiate.class.getName(), "clearTable", "clear table fail", e);
 			e.printStackTrace();
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			LogService.debug(DatabaseServiceConstant.TAG, DatabaseInitiate.class.getName(), "clearTable", "clear table fail", e);
 			e.printStackTrace();
@@ -139,7 +139,7 @@ public class DatabaseInitiate {
 			// TODO Auto-generated catch block
 			LogService.debug(DatabaseServiceConstant.TAG, DatabaseInitiate.class.getName(), "execute", "execute query fail", e);
 			e.printStackTrace();
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			LogService.debug(DatabaseServiceConstant.TAG, DatabaseInitiate.class.getName(), "execute", "execute query fail", e);
 			e.printStackTrace();
@@ -163,7 +163,7 @@ public class DatabaseInitiate {
 			// TODO Auto-generated catch block
 			LogService.debug(DatabaseServiceConstant.TAG, DatabaseInitiate.class.getName(), "initTable", "init table fail", e);
 			e.printStackTrace();
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			LogService.debug(DatabaseServiceConstant.TAG, DatabaseInitiate.class.getName(), "initTable", "init table fail", e);
 			e.printStackTrace();

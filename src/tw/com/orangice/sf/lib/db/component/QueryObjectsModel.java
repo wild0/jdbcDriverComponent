@@ -5,6 +5,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
+import org.bson.Document;
+
 import tw.com.orangice.sf.lib.db._interface.DatabaseManagerInterface;
 import tw.com.orangice.sf.lib.db.constant.DatabaseServiceConstant;
 import tw.com.orangice.sf.lib.log.LogService;
@@ -14,6 +16,10 @@ import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.MapReduceCommand;
 import com.mongodb.MapReduceOutput;
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MapReduceIterable;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 
 
 
@@ -51,8 +57,8 @@ public class QueryObjectsModel {
 			//return rs.next();
 		}
 		else if(dbType==DatabaseServiceConstant.DB_TYPE_MONGO){
-			LogService.debug(DatabaseServiceConstant.TAG,
-					this.getClass().getName(), "getObjects",  String.valueOf(cursor.hasNext())+":"+cursor.count());
+			//LogService.debug(DatabaseServiceConstant.TAG,
+			//		this.getClass().getName(), "getObjects",  String.valueOf(cursor.hasNext())+":"+cursor.count());
 			return cursor.hasNext();
 			/*
 			if(cursor.hasNext()){
@@ -69,14 +75,14 @@ public class QueryObjectsModel {
 		}
 	}
 	
-	DBObject row = null;
+	Document row = null;
 	public void next() throws SQLException{
 		if(dbType==DatabaseServiceConstant.DB_TYPE_MYSQL){
 			rs.next();
 			//return rs.next();
 		}
 		else if(dbType==DatabaseServiceConstant.DB_TYPE_MONGO){
-			row = (DBObject) cursor.next();
+			row =  cursor.next();
 			LogService.debug(DatabaseServiceConstant.TAG,
 					this.getClass().getName(), "getObjects",  String.valueOf(row.toString()));
 		}
@@ -88,7 +94,7 @@ public class QueryObjectsModel {
 			return rs.getString(columnName);
 		}
 		else if(dbType==DatabaseServiceConstant.DB_TYPE_MONGO){
-			String tcolumn = Criteria.getSrcColumnName(columnName);
+			String tcolumn = Criteria.getSrcColumnName(columnName);//join發生時
 			if(tcolumn.equals(columnName)){
 				String val =  (String)row.get(tcolumn);
 				if(val==null){
@@ -107,8 +113,6 @@ public class QueryObjectsModel {
 					return val;
 				}
 			}
-			
-			
 		}
 		else{
 			return "";
@@ -204,10 +208,12 @@ public class QueryObjectsModel {
 	}
 	
 	//DBCollection col = null;
-	DBCursor cursor = null;
-	public QueryObjectsModel(DBCollection col, DBObject dbObj){
+	//DBCursor cursor = null;
+	MongoCursor<Document> cursor = null;
+	public QueryObjectsModel(FindIterable<Document> docs){
 		//this.col = col;
-		cursor = col.find(dbObj);
+		//cursor = col.find(dbObj);
+		this.cursor= docs.iterator();
 		dbType = DatabaseServiceConstant.DB_TYPE_MONGO;
 		
 	}
@@ -221,28 +227,31 @@ public class QueryObjectsModel {
 		return calculateCollectionName;
 	}
 	
-	public void addJoin(String variable, DBCollection col,  String key, ArrayList<String> columns){
+	public void addJoin(String variable, MongoCollection<Document> collection,  String key, ArrayList<String> columns){
 		//key:columns name index(orimKey)
 		String map = getMapStr(key, columns);
 		String reduce = getReduceStr();
 		
 		 System.out.println("addJoin:map:"+map); 
 		 System.out.println("addJoin:reduce:"+reduce); 
+		 MapReduceIterable<Document> reducedCollection = collection.mapReduce(map, reduce);
+
 		
-		MapReduceCommand cmd = new MapReduceCommand(col, map, reduce,
-				calculateCollectionName, MapReduceCommand.OutputType.REDUCE, null);
+		//MapReduceCommand cmd = new MapReduceCommand(collection, map, reduce,
+		//		calculateCollectionName, MapReduceCommand.OutputType.REDUCE, null);
 		
-		MapReduceOutput out = col.mapReduce(cmd);
-		for (DBObject o : out.results()) {  
-			
-		    System.out.println(o.toString());  
-		   }  
+		//MapReduceOutput out = collection.mapReduce(cmd);
+		//for (DBObject o : out.results()) {  
+		//    System.out.println(o.toString());  
+		//   }  
+	
 		//col.ma
 		//MapReduceCommand mrc = new Map 
 		//col.mapReduce(command)
 		
 	}
 	DBCollection calculateCollection = null;
+	/*
 	public void execute(DBCollection calculateCollection, DBObject dbObj){
 		System.out.println("execute:"+calculateCollection.getName()+","+dbObj.toString());
 		if(dbType == DatabaseServiceConstant.DB_TYPE_MONGO){
@@ -254,7 +263,7 @@ public class QueryObjectsModel {
 		}
 		
 	}
-	
+	*/
 	
 	public void close(){
 		if(dbType == DatabaseServiceConstant.DB_TYPE_MONGO){

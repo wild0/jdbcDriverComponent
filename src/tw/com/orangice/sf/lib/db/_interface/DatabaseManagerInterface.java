@@ -8,11 +8,11 @@ import tw.com.orangice.sf.lib.db.component.QueryObjectsModel;
 import tw.com.orangice.sf.lib.db.component.TableCompo;
 
 public interface DatabaseManagerInterface {
-	public void createTable(String tableSchema) throws SQLException ;
-	public void createDatabase(String database) throws SQLException ;
+	public void createTable(String tableSchema) throws SQLException, Exception ;
+	public void createDatabase(String database) throws SQLException, Exception ;
 	
 	public long insertSQL(String table, String[] columns, Object[] values,
-			String keyColumn) throws SQLException ;
+			String keyColumn) throws SQLException, Exception ;
 	public int updateSQL(String table, String[] columns, Object[] values,
 			CriteriaCompo condition) throws SQLException;
 	
@@ -21,11 +21,14 @@ public interface DatabaseManagerInterface {
 	
 	public QueryObjectsModel getObjects(String table, CriteriaCompo condition)
 			throws SQLException;
-	public int getCount(String table, CriteriaCompo condition)
+	public long getCount(String table, CriteriaCompo condition)
 			throws SQLException;
 	public QueryObjectsModel getObjects(TableCompo tableCompo, CriteriaCompo condition)
 			throws SQLException;
-	public int getCount(TableCompo tableCompo, CriteriaCompo condition)
+	public long getCount(TableCompo tableCompo, CriteriaCompo condition)
 			throws SQLException;
+	
+	public boolean isMongoDB();
+	
 	
 }

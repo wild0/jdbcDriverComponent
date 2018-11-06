@@ -3,7 +3,7 @@ package tw.com.orangice.sf.lib.db.component;
 public abstract class CriteriaElement {
     protected String order = "ASC";
     
-    protected String sort = "";
+    protected String sortBy = "";
    
     protected int limit = 0;
 
@@ -15,10 +15,9 @@ public abstract class CriteriaElement {
     
     public abstract String renderWhere();
     
-    
-    public void setSort(String sort)
+    public void setSortBy(String sortBy)
     {
-        this.sort = sort;
+        this.sortBy = sortBy;
     }
     
 }

@@ -2,6 +2,10 @@ package tw.com.orangice.sf.lib.db.component;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.regex.Pattern;
+
+import org.bson.Document;
+import org.bson.conversions.Bson;
 
 import com.mongodb.BasicDBObject;
 
@@ -11,6 +15,10 @@ public class CriteriaCompo extends CriteriaElement {
 
 	String sortBy = "";
 	String order = "";
+
+	String secondSortBy = "";
+	String secondOrder = "";
+
 	int start = 0;
 
 	public int getStart() {
@@ -23,6 +31,12 @@ public class CriteriaCompo extends CriteriaElement {
 
 	public int getLimit() {
 		return limit;
+	}
+	public String getSortBy(){
+		return sortBy;
+	}
+	public String getOrder(){
+		return order;
 	}
 
 	public void setLimit(int limit) {
@@ -87,6 +101,14 @@ public class CriteriaCompo extends CriteriaElement {
 		this.sortBy = sortBy;
 	}
 
+	public void setSecondOrder(String order) {
+		this.secondOrder = order;
+	}
+
+	public void setSecondSortBy(String sortBy) {
+		this.secondSortBy = sortBy;
+	}
+
 	public BasicDBObject renderDBObject() {
 
 		int count = 0;
@@ -105,7 +127,10 @@ public class CriteriaCompo extends CriteriaElement {
 
 			for (int i = 0; i < criteriaElements.size(); i++) {
 				Criteria c = (Criteria) criteriaElements.get(i);
-				BasicDBObject rowQuery = null;
+
+				Bson bson = c.getBson();
+
+				// BasicDBObject rowQuery = null;
 				// if(i-1<0){
 				// rowQuery= c.getDBObject(headDBObject);
 				// addArr.add(rowQuery);
@@ -113,11 +138,11 @@ public class CriteriaCompo extends CriteriaElement {
 				// }
 				// else{
 
-				rowQuery = c.getDBObject(headDBObject, conditions.get(i));
+				// rowQuery = c.getDBObject(headDBObject, conditions.get(i));
 				if (conditions.get(i).equals("and")) {
-					addArr.add(rowQuery);
+					addArr.add(bson);
 				} else if (conditions.get(i).equals("or")) {
-					orArr.add(rowQuery);
+					orArr.add(bson);
 				}
 				// }
 			}
@@ -128,6 +153,64 @@ public class CriteriaCompo extends CriteriaElement {
 
 		return headDBObject;
 
+	}
+
+	public Document renderBson() {
+		int count = 0;
+		boolean quote = false;
+		Document document = new Document();
+
+		ArrayList<Object> orArr = new ArrayList<Object>();
+		ArrayList<Object> andArr = new ArrayList<Object>();
+
+		System.out.println("renderBson:criteriaElements.size():"
+				+ criteriaElements.size() + ":"+conditions.size());
+		if (criteriaElements.size() == 1) {
+			// 只有一筆condition
+			Criteria c = (Criteria) criteriaElements.get(0);
+			//document.append(c.column, c.value);
+			
+			//System.out.println("mongodb like regex(single) "+(String)c.value);
+			//Document element = new Document("$regex", Pattern.compile((String)c.value));
+			if(c.operator.equals("like")){
+				document.put(c.column, Pattern.compile((String)c.value));
+			}
+			else{
+				document.put(c.column, c.value);
+			}
+			
+			//document.append(c.column, element);
+			
+		} else {
+			for (int i = 0; i < criteriaElements.size(); i++) {
+				Criteria c = (Criteria) criteriaElements.get(i);
+				Bson bson = c.getBson();
+				int j = i-1;
+				if (conditions.size() > 0 && j>=0) {
+					System.out.println("mongodb like regex(multi) condition"+conditions.get(j).trim().toLowerCase());
+					if (conditions.get(j).trim().toLowerCase().equals("and")) {
+						andArr.add(bson);
+						System.out.println("mongodb like regex(multi) and condition, size:"+andArr.size());
+					} else if (conditions.get(j).trim().toLowerCase().equals("or")) {
+						orArr.add(bson);
+						System.out.println("mongodb like regex(multi) or condition, size:"+orArr.size());
+					}
+				}
+				else if(j==-1){
+					andArr.add(bson);
+					orArr.add(bson);
+				}
+			}
+			if (andArr.size() > 1) {
+				document.put("$and", andArr);
+			}
+			if (orArr.size() > 1) {
+				document.put("$or", orArr);
+			}
+			System.out.println("mongodb like regex(multi) "+document.toJson());
+		}
+
+		return document;
 	}
 
 	public String render() {
@@ -175,6 +258,9 @@ public class CriteriaCompo extends CriteriaElement {
 			if (!sortBy.equals("")) {
 				buf = buf + " ORDER BY " + sortBy + " " + order + " ";
 			}
+			if (!secondSortBy.equals("")) {
+				buf = buf + ", " + secondSortBy + " " + secondOrder + " ";
+			}
 			if (limit != 0) {
 				buf = buf + " limit " + start + "," + limit + " ";
 			}
@@ -193,14 +279,13 @@ public class CriteriaCompo extends CriteriaElement {
 		// TODO Auto-generated method stub
 		try {
 			String buf = "";
-			if(criteriaElements.size()==0){
-				buf = buf +  render();
+			if (criteriaElements.size() == 0) {
+				buf = buf + render();
 				return buf;
-			}else if(criteriaElements.size()>0){
+			} else if (criteriaElements.size() > 0) {
 				buf = buf + " WHERE " + render();
 				return buf;
-			}
-			else{
+			} else {
 				return "";
 			}
 		} catch (Exception e) {

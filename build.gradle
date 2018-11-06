@@ -36,13 +36,17 @@ dependencies {
     compile 'org.slf4j:slf4j-api:1.7+'
     
     // http://mvnrepository.com/artifact/org.apache.tomcat/tomcat-jdbc
+    // http://mvnrepository.com/artifact/mysql/mysql-connector-java
+	compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.38'
 	compile group: 'org.apache.tomcat', name: 'tomcat-jdbc', version: '8.0.32'
 	// http://mvnrepository.com/artifact/org.mongodb/mongo-java-driver
 	compile group: 'org.mongodb', name: 'mongo-java-driver', version: '3.2.2'
 	// http://mvnrepository.com/artifact/org.json/json
 	compile group: 'org.json', name: 'json', version: '20090211'
 	
-	compile files('../log_service/build/libs/log_service-1.0.jar')
+	compile 'org.xerial:sqlite-jdbc:3.8.11'
+	
+	compile files('libs/log_service-1.0.jar')
 	
 }
 uploadArchives {

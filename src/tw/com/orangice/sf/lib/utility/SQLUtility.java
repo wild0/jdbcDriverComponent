@@ -23,7 +23,7 @@ public class SQLUtility {
 		sql = sql + ")";
 		return sql; 
 	}
-	public static String convertInsertSQL(String table, String[] columns, Object[] values){
+	public static String convertInsertSQL(String table, String[] columns, Object[] values) throws Exception{
 		String sql = "INSERT into "+table +" (";
 		for(int i = 0; i<columns.length;i++){
 			if(i!=0){

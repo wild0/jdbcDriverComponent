@@ -3,6 +3,10 @@ package tw.com.orangice.sf.lib.db.component;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.regex.Pattern;
+
+import org.bson.Document;
+import org.bson.conversions.Bson;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
@@ -171,6 +175,15 @@ public class Criteria extends CriteriaElement {
 			// $lt
 			headDBObject.append(column, new BasicDBObject("$lt", value));
 			dbObject.put(column, new BasicDBObject("$lt", value));
+			
+		} else if(operator.trim().toLowerCase().equals("like")){
+			
+			System.out.println("mongodb like getDBObject regex "+(String)value);
+			
+			headDBObject.append(column, new BasicDBObject("$regex", Pattern.compile((String)value)));
+			dbObject.put(column, new BasicDBObject("$regex", Pattern.compile((String)value)));
+			//Document element = new Document("$regex", Pattern.compile((String)value));
+			//bson.put(column, element);
 		}
 		System.out.println("getDBObject:result headDBObject ("
 				+ headDBObject.toString() + ")");
@@ -232,6 +245,49 @@ public class Criteria extends CriteriaElement {
 		System.out.println("getDBObject:result (" + dbObject.toString() + ")");
 		return dbObject;
 		// return headDBObject;
+	}
+	
+	public Document getBson() {
+		System.out.println("mongodb getBson "+ String.valueOf(value) );
+		Document bson = new Document();
+		operator = operator.trim();
+		String column = getSrcColumnName();
+	
+		if (operator.equals("=")) {
+			System.out.println("mongodb like = "+String.valueOf(value));
+			Document element = new Document("$eq", value);
+			bson.put(column, element);
+			
+		} else if (operator.equals("!=")) {
+			// $ne
+			System.out.println("mongodb like != "+String.valueOf(value));
+			Document element = new Document("$ne", value);
+			bson.put(column, element);
+			
+		} else if (operator.equals(">")) {
+			// $gt
+			System.out.println("mongodb like > "+String.valueOf(value));
+			Document element = new Document("$gt", value);
+			bson.put(column, element);
+			
+		} else if (operator.equals("<")) {
+			// $lt
+			System.out.println("mongodb like < "+String.valueOf(value));
+			Document element = new Document("$lt", value);
+			bson.put(column, element);
+		}
+		else if(operator.trim().toLowerCase().equals("like")){
+			System.out.println("mongodb like regex in bson "+String.valueOf(value));
+			
+			//Document element = new Document("$regex", Pattern.compile(String.valueOf(value)));
+			//bson.put(column, element);
+			bson.put(column, Pattern.compile(String.valueOf(value)));
+		}
+		else{
+			
+		}
+		System.out.println("mongodb like complete "+bson);
+		return bson;
 	}
 
 	public BasicDBObject getJoinDBObject(String prefix,
